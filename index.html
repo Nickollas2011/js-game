@@ -2,74 +2,252 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Pac-Man Clone - JS & Tailwind</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    :root {
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --controls-height: 150px;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #04060d;
+    }
+
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #app {
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #04060d;
+    }
+
+    #gameArea {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    #canvasWrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
     canvas {
+      display: block;
       image-rendering: pixelated;
+      image-rendering: crisp-edges;
       touch-action: none;
       outline: none;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(30, 64, 175, 0.2);
+      background: #05060c;
+    }
+
+    #controlsArea {
+      flex: 0 0 auto;
+      height: calc(var(--controls-height) + var(--safe-bottom));
+      padding: 10px 12px calc(10px + var(--safe-bottom));
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+      background:
+        linear-gradient(to top, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0.92));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls-shell {
+      width: 100%;
+      max-width: 520px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .controls-side {
+      display: flex;
+      justify-content: center;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 8px;
+      width: min(42vw, 180px);
+      height: min(42vw, 180px);
+      max-width: 180px;
+      max-height: 180px;
+    }
+
+    .dpad .empty {
+      pointer-events: none;
     }
 
     .control-btn {
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-      user-select: none;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(30, 41, 59, 0.95);
+      color: white;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: transform 0.08s ease, background 0.15s ease;
+    }
+
+    .control-btn:active {
+      transform: scale(0.96);
+      background: rgba(51, 65, 85, 1);
+    }
+
+    .control-arrow {
+      font-size: clamp(22px, 5vw, 30px);
+      line-height: 1;
+    }
+
+    .center-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 84px;
+    }
+
+    .action-btn {
+      width: clamp(58px, 14vw, 74px);
+      height: clamp(58px, 14vw, 74px);
+      border-radius: 999px;
+      border: 1px solid rgba(96, 165, 250, 0.45);
+      background: rgba(29, 78, 216, 0.95);
+      color: white;
+      font-size: clamp(12px, 3vw, 14px);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    @media (orientation: landscape) and (max-height: 540px) {
+      :root {
+        --controls-height: 108px;
+      }
+
+      .dpad {
+        width: min(26vh, 136px);
+        height: min(26vh, 136px);
+      }
+
+      .center-actions {
+        min-width: 72px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      :root {
+        --controls-height: 132px;
+      }
+
+      #gameArea {
+        padding: 14px;
+      }
+
+      .hint {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
-<body class="bg-[#04060d] text-white flex flex-col items-center justify-center min-h-screen overflow-hidden font-mono px-3 py-3">
-
-  <div class="w-full max-w-[960px] flex flex-col items-center gap-4">
-    <div class="relative shadow-2xl shadow-blue-900/20 w-full">
-      <canvas
-        id="gameCanvas"
-        width="960"
-        height="540"
-        tabindex="0"
-        class="block w-full h-auto rounded-lg"
-      ></canvas>
-    </div>
-
-    <!-- Controles touch para celular -->
-    <div class="md:hidden flex flex-col items-center gap-2 select-none">
-      <button
-        class="control-btn w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-600 text-2xl active:scale-95"
-        data-dir="up"
-        aria-label="Mover para cima"
-      >↑</button>
-
-      <div class="flex items-center gap-2">
-        <button
-          class="control-btn w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-600 text-2xl active:scale-95"
-          data-dir="left"
-          aria-label="Mover para esquerda"
-        >←</button>
-
-        <button
-          id="restartBtn"
-          class="control-btn w-16 h-16 rounded-2xl bg-blue-700/90 border border-blue-500 text-sm font-bold active:scale-95"
-          aria-label="Reiniciar jogo"
-        >R</button>
-
-        <button
-          class="control-btn w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-600 text-2xl active:scale-95"
-          data-dir="right"
-          aria-label="Mover para direita"
-        >→</button>
+<body>
+  <div id="app">
+    <div id="gameArea">
+      <div id="canvasWrap">
+        <canvas id="gameCanvas" width="960" height="540" tabindex="0"></canvas>
       </div>
-
-      <button
-        class="control-btn w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-600 text-2xl active:scale-95"
-        data-dir="down"
-        aria-label="Mover para baixo"
-      >↓</button>
     </div>
 
-    <p class="text-xs text-slate-400 text-center md:hidden">
-      Use os botões para jogar no celular
-    </p>
+    <div id="controlsArea">
+      <div class="controls-shell">
+        <div class="controls-side">
+          <div class="dpad" aria-label="Controle direcional">
+            <div class="empty"></div>
+            <button class="control-btn" data-dir="up" aria-label="Mover para cima">
+              <span class="control-arrow">↑</span>
+            </button>
+            <div class="empty"></div>
+
+            <button class="control-btn" data-dir="left" aria-label="Mover para esquerda">
+              <span class="control-arrow">←</span>
+            </button>
+            <div class="empty"></div>
+            <button class="control-btn" data-dir="right" aria-label="Mover para direita">
+              <span class="control-arrow">→</span>
+            </button>
+
+            <div class="empty"></div>
+            <button class="control-btn" data-dir="down" aria-label="Mover para baixo">
+              <span class="control-arrow">↓</span>
+            </button>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+        <div class="center-actions">
+          <button id="restartBtn" class="action-btn" aria-label="Reiniciar jogo">R</button>
+          <div class="hint">toque ou swipe</div>
+        </div>
+
+        <div class="controls-side">
+          <div class="hint">
+            desktop: setas / WASD<br />
+            celular: botões / swipe
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -107,8 +285,14 @@
     };
 
     const KEY_TO_DIR = {
-      arrowleft: "left", arrowright: "right", arrowup: "up", arrowdown: "down",
-      a: "left", d: "right", w: "up", s: "down"
+      arrowleft: "left",
+      arrowright: "right",
+      arrowup: "up",
+      arrowdown: "down",
+      a: "left",
+      d: "right",
+      w: "up",
+      s: "down"
     };
 
     // --- DADOS DOS NÍVEIS ---
@@ -200,6 +384,7 @@
 
         this.loadLevel(0);
         this.bindEvents();
+        this.resizeCanvas();
 
         this.lastTime = performance.now();
         requestAnimationFrame((now) => this.tick(now));
@@ -208,18 +393,14 @@
       bindEvents() {
         window.addEventListener("keydown", (e) => this.onKeyPress(e), { passive: false });
 
-        // Mantém foco para teclado físico
         this.canvas.addEventListener("click", () => this.canvas.focus());
         this.canvas.addEventListener("touchstart", () => this.canvas.focus(), { passive: true });
 
-        // Swipe no canvas (opcional)
         this.canvas.addEventListener("touchstart", (e) => this.onTouchStart(e), { passive: true });
         this.canvas.addEventListener("touchend", (e) => this.onTouchEnd(e), { passive: true });
 
-        // Botões touch
         document.querySelectorAll("[data-dir]").forEach((btn) => {
           const dir = btn.dataset.dir;
-
           const setDir = (e) => {
             if (e) e.preventDefault();
             this.player.nextDir = dir;
@@ -232,17 +413,45 @@
         });
 
         const restartBtn = document.getElementById("restartBtn");
-        if (restartBtn) {
-          const restart = (e) => {
-            if (e) e.preventDefault();
-            this.restartGame();
-            this.canvas.focus();
-          };
+        restartBtn.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          this.restartGame();
+          this.canvas.focus();
+        }, { passive: false });
+        restartBtn.addEventListener("mousedown", () => {
+          this.restartGame();
+          this.canvas.focus();
+        });
+        restartBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          this.restartGame();
+          this.canvas.focus();
+        });
 
-          restartBtn.addEventListener("touchstart", restart, { passive: false });
-          restartBtn.addEventListener("mousedown", restart);
-          restartBtn.addEventListener("click", restart);
+        window.addEventListener("resize", () => this.resizeCanvas());
+        window.addEventListener("orientationchange", () => {
+          setTimeout(() => this.resizeCanvas(), 150);
+        });
+      }
+
+      resizeCanvas() {
+        const gameArea = document.getElementById("gameArea");
+        const rect = gameArea.getBoundingClientRect();
+
+        const availableW = Math.max(0, rect.width - 8);
+        const availableH = Math.max(0, rect.height - 8);
+
+        const gameRatio = WIDTH / HEIGHT;
+        let targetW = availableW;
+        let targetH = targetW / gameRatio;
+
+        if (targetH > availableH) {
+          targetH = availableH;
+          targetW = targetH * gameRatio;
         }
+
+        this.canvas.style.width = `${Math.floor(targetW)}px`;
+        this.canvas.style.height = `${Math.floor(targetH)}px`;
       }
 
       onTouchStart(e) {
@@ -269,7 +478,9 @@
         }
       }
 
-      toKey(col, row) { return `${col},${row}`; }
+      toKey(col, row) {
+        return `${col},${row}`;
+      }
 
       onKeyPress(e) {
         const key = e.key.toLowerCase();
@@ -348,7 +559,7 @@
 
         this.powerPellets.clear();
         for (let [c, r] of level.power_pellets) {
-          let key = this.toKey(c, r);
+          const key = this.toKey(c, r);
           if (!this.walls.has(key) && !reserved.has(key)) {
             this.powerPellets.add(key);
           }
@@ -357,7 +568,7 @@
         this.pellets.clear();
         for (let c = 0; c < COLS; c++) {
           for (let r = 0; r < ROWS; r++) {
-            let key = this.toKey(c, r);
+            const key = this.toKey(c, r);
             if (!this.walls.has(key) && !reserved.has(key) && !this.powerPellets.has(key)) {
               this.pellets.add(key);
             }
@@ -367,8 +578,8 @@
         const ghostColors = ["#ff4d4d", "#ff9f43", "#5bb8ff", "#ff79d1"];
         this.ghosts = [];
         for (let i = 0; i < ghostSpawns.length; i++) {
-          let color = ghostColors[i % ghostColors.length];
-          let speed = level.ghost_speed + i * 6;
+          const color = ghostColors[i % ghostColors.length];
+          const speed = level.ghost_speed + i * 6;
           this.ghosts.push(new Ghost(ghostSpawns[i], color, speed, this.tileCenter.bind(this)));
         }
 
@@ -389,29 +600,33 @@
       }
 
       circleRectHit(cx, cy, radius, rx, ry, rw, rh) {
-        let nearestX = Math.max(rx, Math.min(cx, rx + rw));
-        let nearestY = Math.max(ry, Math.min(cy, ry + rh));
-        let dx = cx - nearestX;
-        let dy = cy - nearestY;
+        const nearestX = Math.max(rx, Math.min(cx, rx + rw));
+        const nearestY = Math.max(ry, Math.min(cy, ry + rh));
+        const dx = cx - nearestX;
+        const dy = cy - nearestY;
         return (dx * dx + dy * dy) <= (radius * radius);
       }
 
       circleHitsWall(cx, cy, radius) {
-        if (cx - radius < BOARD_X || cx + radius > BOARD_X + BOARD_W ||
-            cy - radius < BOARD_Y || cy + radius > BOARD_Y + BOARD_H) {
+        if (
+          cx - radius < BOARD_X ||
+          cx + radius > BOARD_X + BOARD_W ||
+          cy - radius < BOARD_Y ||
+          cy + radius > BOARD_Y + BOARD_H
+        ) {
           return true;
         }
 
-        let minCol = Math.max(0, Math.floor((cx - radius - BOARD_X) / TILE));
-        let maxCol = Math.min(COLS - 1, Math.floor((cx + radius - BOARD_X) / TILE));
-        let minRow = Math.max(0, Math.floor((cy - radius - BOARD_Y) / TILE));
-        let maxRow = Math.min(ROWS - 1, Math.floor((cy + radius - BOARD_Y) / TILE));
+        const minCol = Math.max(0, Math.floor((cx - radius - BOARD_X) / TILE));
+        const maxCol = Math.min(COLS - 1, Math.floor((cx + radius - BOARD_X) / TILE));
+        const minRow = Math.max(0, Math.floor((cy - radius - BOARD_Y) / TILE));
+        const maxRow = Math.min(ROWS - 1, Math.floor((cy + radius - BOARD_Y) / TILE));
 
         for (let c = minCol; c <= maxCol; c++) {
           for (let r = minRow; r <= maxRow; r++) {
             if (!this.walls.has(this.toKey(c, r))) continue;
-            let rx = BOARD_X + c * TILE;
-            let ry = BOARD_Y + r * TILE;
+            const rx = BOARD_X + c * TILE;
+            const ry = BOARD_Y + r * TILE;
             if (this.circleRectHit(cx, cy, radius, rx, ry, TILE, TILE)) return true;
           }
         }
@@ -419,10 +634,10 @@
       }
 
       applyTunnelWrap(x, y, radius) {
-        let row = Math.floor((y - BOARD_Y) / TILE);
+        const row = Math.floor((y - BOARD_Y) / TILE);
         if (this.tunnelRows.has(row)) {
-          let left = BOARD_X - radius;
-          let right = BOARD_X + BOARD_W + radius;
+          const left = BOARD_X - radius;
+          const right = BOARD_X + BOARD_W + radius;
           if (x < left) x = BOARD_X + BOARD_W - radius - 1;
           else if (x > right) x = BOARD_X + radius + 1;
         }
@@ -431,11 +646,12 @@
 
       tryMove(x, y, dir, speed, dt, radius) {
         if (!DIRS[dir]) return { x, y, ok: false };
-        let [dx, dy] = DIRS[dir];
+
+        const [dx, dy] = DIRS[dir];
         let nx = x + dx * speed * dt;
         let ny = y + dy * speed * dt;
 
-        let wrapped = this.applyTunnelWrap(nx, ny, radius);
+        const wrapped = this.applyTunnelWrap(nx, ny, radius);
         nx = wrapped.x;
         ny = wrapped.y;
 
@@ -444,14 +660,14 @@
       }
 
       atTileCenter(x, y, tol = 4) {
-        let { col, row } = this.worldToTile(x, y);
-        let pos = this.tileCenter(col, row);
+        const { col, row } = this.worldToTile(x, y);
+        const pos = this.tileCenter(col, row);
         return Math.abs(x - pos.x) <= tol && Math.abs(y - pos.y) <= tol;
       }
 
       snapForTurn(desiredDir) {
-        let { col, row } = this.worldToTile(this.player.x, this.player.y);
-        let pos = this.tileCenter(col, row);
+        const { col, row } = this.worldToTile(this.player.x, this.player.y);
+        const pos = this.tileCenter(col, row);
 
         if (["up", "down"].includes(desiredDir) && ["left", "right"].includes(this.player.dir)) {
           if (Math.abs(this.player.x - pos.x) <= TURN_SNAP) this.player.x = pos.x;
@@ -462,9 +678,9 @@
       }
 
       availableDirs(x, y, speed, radius) {
-        let options = [];
-        for (let dir in DIRS) {
-          let res = this.tryMove(x, y, dir, speed, 0.04, radius);
+        const options = [];
+        for (const dir in DIRS) {
+          const res = this.tryMove(x, y, dir, speed, 0.04, radius);
           if (res.ok) options.push(dir);
         }
         return options;
@@ -473,10 +689,10 @@
       updatePlayer(dt) {
         this.snapForTurn(this.player.nextDir);
 
-        let resTurn = this.tryMove(this.player.x, this.player.y, this.player.nextDir, PLAYER_SPEED, 0.04, PLAYER_RADIUS);
+        const resTurn = this.tryMove(this.player.x, this.player.y, this.player.nextDir, PLAYER_SPEED, 0.04, PLAYER_RADIUS);
         if (resTurn.ok) this.player.dir = this.player.nextDir;
 
-        let resMove = this.tryMove(this.player.x, this.player.y, this.player.dir, PLAYER_SPEED, dt, PLAYER_RADIUS);
+        const resMove = this.tryMove(this.player.x, this.player.y, this.player.dir, PLAYER_SPEED, dt, PLAYER_RADIUS);
         if (resMove.ok) {
           this.player.x = resMove.x;
           this.player.y = resMove.y;
@@ -489,8 +705,8 @@
 
         let choices = [...options];
         if (OPPOSITE[ghost.dir] && choices.length > 1) {
-          let opposite = OPPOSITE[ghost.dir];
-          let filtered = choices.filter(d => d !== opposite);
+          const opposite = OPPOSITE[ghost.dir];
+          const filtered = choices.filter(d => d !== opposite);
           if (filtered.length > 0) choices = filtered;
         }
 
@@ -499,17 +715,17 @@
         }
 
         if (Math.random() < 0.70) {
-          let targetX = this.player.x;
-          let targetY = this.player.y;
+          const targetX = this.player.x;
+          const targetY = this.player.y;
 
           let bestDir = choices[0];
           let minDistSq = Infinity;
 
-          for (let dir of choices) {
-            let [dx, dy] = DIRS[dir];
-            let testX = ghost.x + dx * TILE;
-            let testY = ghost.y + dy * TILE;
-            let distSq = (testX - targetX) ** 2 + (testY - targetY) ** 2;
+          for (const dir of choices) {
+            const [dx, dy] = DIRS[dir];
+            const testX = ghost.x + dx * TILE;
+            const testY = ghost.y + dy * TILE;
+            const distSq = (testX - targetX) ** 2 + (testY - targetY) ** 2;
 
             if (distSq < minDistSq) {
               minDistSq = distSq;
@@ -523,12 +739,12 @@
       }
 
       updateGhosts(dt) {
-        for (let ghost of this.ghosts) {
+        for (const ghost of this.ghosts) {
           let speed = ghost.baseSpeed;
           if (this.frightTimer > 0) speed *= 0.64;
 
-          let options = this.availableDirs(ghost.x, ghost.y, speed, GHOST_RADIUS);
-          let atCenter = this.atTileCenter(ghost.x, ghost.y, 4);
+          const options = this.availableDirs(ghost.x, ghost.y, speed, GHOST_RADIUS);
+          const atCenter = this.atTileCenter(ghost.x, ghost.y, 4);
 
           if (!options.includes(ghost.dir)) {
             ghost.dir = this.chooseGhostDir(ghost, options);
@@ -536,7 +752,7 @@
             ghost.dir = this.chooseGhostDir(ghost, options);
           }
 
-          let res = this.tryMove(ghost.x, ghost.y, ghost.dir, speed, dt, GHOST_RADIUS);
+          const res = this.tryMove(ghost.x, ghost.y, ghost.dir, speed, dt, GHOST_RADIUS);
           if (res.ok) {
             ghost.x = res.x;
             ghost.y = res.y;
@@ -547,8 +763,8 @@
       }
 
       checkPelletPickup() {
-        let { col, row } = this.worldToTile(this.player.x, this.player.y);
-        let key = this.toKey(col, row);
+        const { col, row } = this.worldToTile(this.player.x, this.player.y);
+        const key = this.toKey(col, row);
 
         if (this.pellets.has(key)) {
           this.pellets.delete(key);
@@ -563,10 +779,12 @@
       }
 
       checkGhostHits() {
-        let hitDistanceSq = Math.pow(PLAYER_RADIUS + GHOST_RADIUS - 2, 2);
-        for (let ghost of this.ghosts) {
-          let dx = this.player.x - ghost.x;
-          let dy = this.player.y - ghost.y;
+        const hitDistanceSq = Math.pow(PLAYER_RADIUS + GHOST_RADIUS - 2, 2);
+
+        for (const ghost of this.ghosts) {
+          const dx = this.player.x - ghost.x;
+          const dy = this.player.y - ghost.y;
+
           if ((dx * dx + dy * dy) > hitDistanceSq) continue;
 
           if (this.frightTimer > 0) {
@@ -632,34 +850,34 @@
         ctx.fillStyle = this.wallColor;
         ctx.strokeStyle = "#10226b";
         ctx.lineWidth = 1;
-        for (let key of this.walls) {
-          let [c, r] = key.split(",").map(Number);
-          let x = BOARD_X + c * TILE;
-          let y = BOARD_Y + r * TILE;
+        for (const key of this.walls) {
+          const [c, r] = key.split(",").map(Number);
+          const x = BOARD_X + c * TILE;
+          const y = BOARD_Y + r * TILE;
           ctx.fillRect(x, y, TILE, TILE);
           ctx.strokeRect(x, y, TILE, TILE);
         }
 
         ctx.fillStyle = "#ffdca1";
-        for (let key of this.pellets) {
-          let [c, r] = key.split(",").map(Number);
-          let pos = this.tileCenter(c, r);
+        for (const key of this.pellets) {
+          const [c, r] = key.split(",").map(Number);
+          const pos = this.tileCenter(c, r);
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, PELLET_RADIUS, 0, Math.PI * 2);
           ctx.fill();
         }
 
         ctx.fillStyle = "#ffffff";
-        let pulse = 1.0 + 0.20 * Math.sin(this.animClock * 8);
-        for (let key of this.powerPellets) {
-          let [c, r] = key.split(",").map(Number);
-          let pos = this.tileCenter(c, r);
+        const pulse = 1.0 + 0.20 * Math.sin(this.animClock * 8);
+        for (const key of this.powerPellets) {
+          const [c, r] = key.split(",").map(Number);
+          const pos = this.tileCenter(c, r);
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, POWER_PELLET_RADIUS * pulse, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        for (let ghost of this.ghosts) {
+        for (const ghost of this.ghosts) {
           this.drawGhost(ghost);
         }
 
@@ -668,8 +886,12 @@
         ctx.fillStyle = "#f0f0f0";
         ctx.font = "bold 18px monospace";
         ctx.textAlign = "left";
-        let totalPellets = this.pellets.size + this.powerPellets.size;
-        ctx.fillText(`Fase: ${Math.min(this.levelIndex + 1, 3)}/3    Score: ${this.score}    Vidas: ${this.lives}    Pellets: ${totalPellets}`, 18, 26);
+        const totalPellets = this.pellets.size + this.powerPellets.size;
+        ctx.fillText(
+          `Fase: ${Math.min(this.levelIndex + 1, 3)}/3    Score: ${this.score}    Vidas: ${this.lives}    Pellets: ${totalPellets}`,
+          18,
+          26
+        );
 
         ctx.fillStyle = "#d2d8e4";
         ctx.font = "14px monospace";
@@ -687,7 +909,7 @@
       }
 
       drawPlayer() {
-        let mouth = this.player.moving ? 20 + 18 * Math.abs(Math.sin(this.animClock * 14)) : 12;
+        const mouth = this.player.moving ? 20 + 18 * Math.abs(Math.sin(this.animClock * 14)) : 12;
 
         const angles = {
           right: 0,
@@ -695,10 +917,10 @@
           left: 180,
           up: 270
         };
-        let baseAngle = angles[this.player.dir];
+        const baseAngle = angles[this.player.dir];
 
-        let startAngle = (baseAngle + mouth / 2) * Math.PI / 180;
-        let endAngle = (baseAngle + 360 - mouth / 2) * Math.PI / 180;
+        const startAngle = (baseAngle + mouth / 2) * Math.PI / 180;
+        const endAngle = (baseAngle + 360 - mouth / 2) * Math.PI / 180;
 
         this.ctx.fillStyle = "#ffd84d";
         this.ctx.beginPath();
@@ -708,10 +930,10 @@
       }
 
       drawGhost(ghost) {
-        let x = ghost.x;
-        let y = ghost.y;
-        let r = GHOST_RADIUS;
-        let ctx = this.ctx;
+        const x = ghost.x;
+        const y = ghost.y;
+        const r = GHOST_RADIUS;
+        const ctx = this.ctx;
 
         let color = ghost.color;
         if (this.frightTimer > 0) {
@@ -732,16 +954,17 @@
         ctx.lineTo(x - r, y);
         ctx.fill();
 
-        let eyeY = y - r * 0.10;
-        let eyeDx = r * 0.38;
-        let eyeR = r * 0.28;
+        const eyeY = y - r * 0.10;
+        const eyeDx = r * 0.38;
+        const eyeR = r * 0.28;
 
-        let [dirDx, dirDy] = DIRS[ghost.dir] || [0, 0];
-        let pupilDx = dirDx * 2.2;
-        let pupilDy = dirDy * 2.2;
+        const [dirDx, dirDy] = DIRS[ghost.dir] || [0, 0];
+        const pupilDx = dirDx * 2.2;
+        const pupilDy = dirDy * 2.2;
 
-        for (let side of [-1, 1]) {
-          let ex = x + side * eyeDx;
+        for (const side of [-1, 1]) {
+          const ex = x + side * eyeDx;
+
           ctx.fillStyle = "#ffffff";
           ctx.beginPath();
           ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
@@ -755,7 +978,7 @@
       }
 
       drawOverlay(title, subtitle, color) {
-        let ctx = this.ctx;
+        const ctx = this.ctx;
         ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -782,8 +1005,7 @@
     }
 
     window.onload = () => {
-      const game = new GameApp("gameCanvas");
-      window.__pacmanGame = game;
+      new GameApp("gameCanvas");
     };
   </script>
 </body>
